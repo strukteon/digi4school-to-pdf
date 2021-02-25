@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Title</title>
+    <link rel="stylesheet" href="../libraries/materialize/materialize.min.css">
+    <link rel="stylesheet" href="style.css">
+    <script src="../libraries/materialize/materialize.min.js"></script>
+    <script src="../libraries/browser-polyfill.min.js"></script>
+    <script src="./popup.js" type="module"></script>
+</head>
+<body>
+
+    <div class="header">
+        <a href="https://digi4school.at/" target="_blank"><img src="d4s_logo.png" alt="d4s logo"></a>
+        <br>
+        <span>to PDF</span>
+    </div>
+
+    <main>
+        <p id="cur-book-text">Ausgewähltes Buch: <span class="grey-d4s2pdf" id="cur-book">lädt...</span></p>
+        <p id="converting-text">Konvertiert: <span class="grey-d4s2pdf" id="cur-converting">lädt...</span></p>
+
+        <div class="progress">
+            <div class="determinate" style="width: 0%"></div>
+        </div>
+
+        <div style="display: none" id="convert-details">
+            <p>Seite <span class="grey-d4s2pdf" id="cur-page">12</span> von <span class="grey-d4s2pdf" id="num-pages">123</span></p>
+            <p>Zeit verbleibend: <span class="grey-d4s2pdf" id="timer">0h 12m 35s</span></p>
+        </div>
+
+
+        <a id="convert-btn" class="waves-effect waves-light btn">Konvertieren</a>
+
+        <p class="notice">Benutzung auf eigene Verantwortung!</p>
+        <span>Logo (c) Digi4School</span>
+        <p>Erstellt von <a href="https://strukteon.net/">strukteon</a></p>
+    </main>
+
+</body>
+</html>

@@ -1,0 +1,81 @@
+.btn-d4s2pdf {
+    background-color: #ff6600 !important;
+    font-weight: bold;
+    font-style: italic;
+    color: rgba(255, 255, 255, .9);
+}
+
+.modal-footer {
+    background-color: #40b7ea !important;
+}
+
+.modal-content {
+    padding: 0 !important;
+}
+
+.modal-content .header > span {
+    font-weight: bold;
+    font-style: italic;
+    font-size: x-large;
+    color: #2E516D;
+    padding: .125rem;
+    margin: .125rem;
+}
+
+.modal-content .header {
+    padding: 24px;
+}
+
+.modal-content .content {
+    padding: 24px;
+    background-color: #40b7ea;
+    color: white;
+}
+
+.input-field, .input-field input {
+    border-bottom-color: white !important;
+    color: white !important;
+}
+
+.modal-content .select-wrapper, .select-wrapper .select-dropdown,
+.modal-content label, .dropdown-content li span {
+    color: white !important;
+}
+
+.dropdown-content {
+    background-color: #40b7ea;
+}
+
+.modal-content .select-wrapper svg {
+    fill: white !important;
+}
+
+input[type="range"] {
+    border: none;
+}
+
+input[type="range"]::-moz-range-thumb {
+    background-color: #ff6600;
+}
+
+input[type="range"]::-moz-range-track {
+    background-color: rgba(255, 255, 255, .5);
+}
+
+.row {
+    margin: 0 !important;
+}
+
+input[type="number"] {
+    -webkit-appearance: textfield;
+    -moz-appearance: textfield;
+    appearance: textfield;
+}
+input[type=number]::-webkit-inner-spin-button,
+input[type=number]::-webkit-outer-spin-button {
+    -webkit-appearance: none;
+}
+
+.d4s2pdf-error {
+    color: #ff6600;
+}
