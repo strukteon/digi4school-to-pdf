@@ -1,4 +1,4 @@
-**Digi4School 2 PDF**
+# Digi4School 2 PDF
 
 Ein Tool, um Digi4School Bücher zu PDF Dateien zu konvertieren und herunterzuladen.
 
