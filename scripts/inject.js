@@ -9,20 +9,21 @@
             '<div class="content row">' +
             '<div class="input-field col s12">' +
                 '<select id="savemethod">' +
-                    '<option value="png" selected>Als PNG (Rasterisiert)</option>' +
-                    '<option value="vector">Vektorgrafik (Hochauflösend)</option>' +
+                    '<option value="png">Als PNG (Rasterisiert)</option>' +
+                    '<option value="vector" selected>Vektorgrafik (Hochauflösend)</option>' +
                 '</select>' +
                 '<label>Speichermethode</label>' +
             '</div>' +
             '<div class="col s1"></div>' +
-            '<div id="png-info" class="col s11">' +
+            '<div id="png-info" class="col s11" style="display: none">' +
                 '<p class="range-field">' +
                     '<label>Skalierung: <span id="scale-display">0.75</span>x</label>' +
                     '<input type="range" id="scale" min="1" max="16" value="3"/>' +
                 '</p>' +
-                '<p>Achtung: Je höher die Auflösung ist, desto länger braucht der Vorgang und die Ergebnis-PDF verbraucht mehr Speicherplatz.</p>' +
+                '<p>Achtung: Je höher die Auflösung ist, desto länger braucht der Vorgang und die Ergebnis-PDF verbraucht mehr Speicherplatz.' +
+        '</p>' +
             '</div>' +
-            '<p class="col s11" id="vector-info" style="display: none">Achtung: Manche Bilder können nicht gespeichert werden.</p>' +
+            '<p class="col s11" id="vector-info">Achtung: Manche Bilder können nicht gespeichert werden.</p>' +
             '<div class="row">' +
                 '<div class="input-field col s6">' +
                     '<input id="from-page" type="text">' +
@@ -52,7 +53,7 @@
 
 
     M.Modal.init(document.querySelectorAll('.modal'));
-    M.FormSelect.init(document.querySelectorAll('#savemethod'))[0];
+    M.FormSelect.init(document.querySelectorAll('#savemethod'));
 
     instance_modal = M.Modal.getInstance(div_modal);
     instance_modal.open();
@@ -206,6 +207,7 @@
 
         for (let i = options.from_page; i <= options.to_page; i++) {
             if (canceled) break;
+            console.log("start page 1")
             await download_svg(i);
             console.log("downloaded page " + i);
             convert_progress.cur_page = i;
@@ -262,10 +264,12 @@
 
                             pdf_doc.addPage();
 
+                            console.log("after add page");
                             let add_page;
                             if (options.savemethod === "vector") add_page = add_as_vector;
                             else if (options.savemethod === "png") add_page = add_as_png;
 
+                            console.log("before add svg")
                             add_page(pdf_doc, svg_html)
                                 .then(() => resolve(page));
                         });
@@ -278,7 +282,9 @@
 
             function add_as_vector(doc, svg) {
                 return new Promise((resolve, reject) => {
+                    console.log("before pdfkit add image", doc.image)
                     SVGtoPDF(doc, svg, 0, 0);
+                    console.log("after pdfkit add image")
                     resolve();
                 });
             }
@@ -291,9 +297,14 @@
                     let svg_elem = template.childNodes[0];
                     svg_elem.style.background_color = "white";
                     console.log(svg_elem)
-                    svgAsPngUri(svg_elem, {scale: options.scale}, (uri, w, h) => {
+                    svgAsPngUri(svg_elem, {}, (uri, w, h) => {
+                        console.log("before pdfkit add image", doc.image)
+                        console.log(uri)
+                        console.log(options)
+                        // TODO reject "data:," uris, as an error occurred while converting!
                         doc.image(uri, 0, 0);
 
+                        console.log("after pdfkit add image")
                         resolve();
                     });
                 });

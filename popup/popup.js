@@ -67,12 +67,16 @@ browser.runtime.sendMessage({type: "is_converting"})
                 ui_cur_page.innerText = cur_page - from_page + 1;
                 ui_num_pages.innerText = to_page - from_page + 1;
                 let time = Math.round((new Date() - time_begin) / 1000)
+                console.log(time)
                 let remaining_time = Math.round(time / (cur_page - from_page + 1) * (to_page - cur_page));
                 let hours = Math.floor(remaining_time / 3600);
                 remaining_time -= hours * 3600;
                 let minutes = Math.floor(remaining_time / 60);
                 let seconds = remaining_time % 60;
-                ui_timer.innerText = `${hours}h ${minutes}m ${seconds}s`;
+                if (hours !== Infinity)
+                    ui_timer.innerText = `${hours}h ${minutes}m ${seconds}s`;
+                else
+                    ui_timer.innerText = `Nicht berechenbar`;
                 progress.style.width = (100 * (cur_page - from_page + 1) / (to_page - from_page)) + "%";
                 console.log(progress.style.width, msg.convert_progress)
             });

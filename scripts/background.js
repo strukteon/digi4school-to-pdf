@@ -39,6 +39,7 @@ function onMessage(message) {
 
     if (message.type === "start_converting") {
         converting = true;
+        convert_progress = message.convert_progress;
     }
     else if (message.type === "update_tabid") {
         converting_tab = message.tabid;
