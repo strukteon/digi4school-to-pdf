@@ -148,8 +148,12 @@
             size: [
                 width * options.scale,
                 height * options.scale
-            ]
+            ],
+            margin: 0
         });
+
+        console.log("------",width, height);
+        console.log(pdf_doc);
 
         let chunks = [];
         pdf_doc.pipe({
@@ -166,13 +170,10 @@
                 a.click();
                 URL.revokeObjectURL(blobUrl)
             },
-            // readable streaaam stub iplementation
-            on: (event, action) => {
-            },
-            once: (...args) => {
-            },
-            emit: (...args) => {
-            },
+            // readable stream stub implementation
+            on: (event, action) => { },
+            once: (...args) => { },
+            emit: (...args) => { },
         });
 
         console.log("after pdfdoc")
@@ -208,7 +209,13 @@
         for (let i = options.from_page; i <= options.to_page; i++) {
             if (canceled) break;
             console.log("start page 1")
-            await download_svg(i);
+            try {
+                await download_svg(i);
+            } catch (error) {
+                if (error.cancel)
+                    canceled = true;
+                alert(error.msg);
+            }
             console.log("downloaded page " + i);
             convert_progress.cur_page = i;
             browser.runtime.sendMessage({
@@ -271,7 +278,8 @@
 
                             console.log("before add svg")
                             add_page(pdf_doc, svg_html)
-                                .then(() => resolve(page));
+                            .then(() => resolve(page))
+                            .catch(error => reject({cancel: true, msg: error.msg}));
                         });
 
                 }
@@ -282,8 +290,8 @@
 
             function add_as_vector(doc, svg) {
                 return new Promise((resolve, reject) => {
-                    console.log("before pdfkit add image", doc.image)
-                    SVGtoPDF(doc, svg, 0, 0);
+                    console.log("before pdfkit add image", {width, height})
+                    SVGtoPDF(doc, svg, 0, 0, {assumePt: true});
                     console.log("after pdfkit add image")
                     resolve();
                 });
@@ -301,7 +309,11 @@
                         console.log("before pdfkit add image", doc.image)
                         console.log(uri)
                         console.log(options)
-                        // TODO reject "data:," uris, as an error occurred while converting!
+                        // reject "data:," uris, as an error occurred while converting!
+                        if (uri === "data:,") {
+                            reject({msg: 'Anscheinend funktioniert die Speichermethode "PNG" bei diesem Buch ' +
+                                    'nicht, bitte versuche es erneut und wähle eine andere aus.'});
+                        }
                         doc.image(uri, 0, 0);
 
                         console.log("after pdfkit add image")
