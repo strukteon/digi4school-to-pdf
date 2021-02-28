@@ -18,7 +18,7 @@
             '<div id="png-info" class="col s11" style="display: none">' +
                 '<p class="range-field">' +
                     '<label>Skalierung: <span id="scale-display">0.75</span>x</label>' +
-                    '<input type="range" id="scale" min="1" max="16" value="3"/>' +
+                    '<input type="range" id="scale" min="1" max="16" value="4"/>' +
                 '</p>' +
                 '<p>Achtung: Je höher die Auflösung ist, desto länger braucht der Vorgang und die Ergebnis-PDF verbraucht mehr Speicherplatz.' +
         '</p>' +
@@ -136,7 +136,8 @@
     async function generate_pdf(options) {
         let http = new XMLHttpRequest();
         let url = new URL(window.location);
-        let base_url = url.origin + url.pathname;
+        let base_url = (url.origin + url.pathname).replace(/\/[^\/]+?$/, '/');
+        console.log(url, base_url)
 
         let svg_container = document.evaluate("//*[@id=\"jpedal\"]/div[2]/object", document, null, XPathResult.FIRST_ORDERED_NODE_TYPE, null).singleNodeValue;
         let width = Number(svg_container.width);
@@ -214,7 +215,9 @@
             } catch (error) {
                 if (error.cancel)
                     canceled = true;
-                alert(error.msg);
+                if (error.msg)
+                    alert(error.msg);
+                else console.error(error)
             }
             console.log("downloaded page " + i);
             convert_progress.cur_page = i;
@@ -234,6 +237,7 @@
         function download_svg(page) {
             return new Promise((resolve, reject) => {
 
+                console.log(`${base_url}${page}/${page}.svg`)
                 http.open("GET", `${base_url}${page}/${page}.svg`);
                 console.log(`${base_url}${page}/${page}.svg`)
                 http.onreadystatechange = () => {
@@ -279,7 +283,7 @@
                             console.log("before add svg")
                             add_page(pdf_doc, svg_html)
                             .then(() => resolve(page))
-                            .catch(error => reject({cancel: true, msg: error.msg}));
+                            .catch(error => reject({cancel: true, msg: error.msg, error}));
                         });
 
                 }
@@ -291,7 +295,13 @@
             function add_as_vector(doc, svg) {
                 return new Promise((resolve, reject) => {
                     console.log("before pdfkit add image", {width, height})
-                    SVGtoPDF(doc, svg, 0, 0, {assumePt: true});
+                    try {
+                        SVGtoPDF(doc, svg, 0, 0, {assumePt: true});
+                    } catch (error) {
+                        reject({msg: 'Anscheinend funktioniert die Speichermethode "Vektor" bei diesem Buch ' +
+                                'nicht, bitte versuche es erneut und wähle eine andere aus.'});
+                        return;
+                    }
                     console.log("after pdfkit add image")
                     resolve();
                 });
@@ -305,7 +315,7 @@
                     let svg_elem = template.childNodes[0];
                     svg_elem.style.background_color = "white";
                     console.log(svg_elem)
-                    svgAsPngUri(svg_elem, {}, (uri, w, h) => {
+                    svgAsPngUri(svg_elem, {scale: options.scale}, (uri, w, h) => {
                         console.log("before pdfkit add image", doc.image)
                         console.log(uri)
                         console.log(options)
@@ -313,6 +323,7 @@
                         if (uri === "data:,") {
                             reject({msg: 'Anscheinend funktioniert die Speichermethode "PNG" bei diesem Buch ' +
                                     'nicht, bitte versuche es erneut und wähle eine andere aus.'});
+                            return;
                         }
                         doc.image(uri, 0, 0);
 
