@@ -28,14 +28,14 @@ browser.tabs.query({currentWindow: true, active: true})
 });
 
 btn.onclick = () => {
-    browser.tabs.executeScript({file: "../libraries/browser-polyfill.min.js"})
-    .then(() => browser.tabs.insertCSS({file: "../libraries/materialize/materialize.min.css"}))
-    .then(() => browser.tabs.executeScript({file: "../libraries/materialize/materialize.min.js"}))
-    .then(() => browser.tabs.insertCSS({file: "../scripts/inject.css"}))
-    .then(() => browser.tabs.executeScript({file: "../libraries/pdfkit.standalone.min.js"}))
-    .then(() => browser.tabs.executeScript({file: "../libraries/svg-to-pdfkit.min.js"}))
-    .then(() => browser.tabs.executeScript({file: "../libraries/saveSvgAsPng.js"}))
-    .then(() => browser.tabs.executeScript({file: "../scripts/inject.js"}))
+    browser.tabs.executeScript({file: "/libraries/browser-polyfill.min.js"})
+    .then(() => browser.tabs.insertCSS({file: "/libraries/materialize/materialize.min.css"}))
+    .then(() => browser.tabs.executeScript({file: "/libraries/materialize/materialize.min.js"}))
+    .then(() => browser.tabs.insertCSS({file: "/scripts/inject.css"}))
+    .then(() => browser.tabs.executeScript({file: "/libraries/pdfkit.standalone.min.js"}))
+    .then(() => browser.tabs.executeScript({file: "/libraries/svg-to-pdfkit.min.js"}))
+    .then(() => browser.tabs.executeScript({file: "/libraries/saveSvgAsPng.js"}))
+    .then(() => browser.tabs.executeScript({file: "/scripts/inject.js"}))
     .then(() => {
         browser.runtime.sendMessage({type: "update_tabid", tabid})
         console.log("inserted all scripts");
@@ -66,6 +66,7 @@ browser.runtime.sendMessage({type: "is_converting"})
                 // console.log(msg.convert_progress);
                 ui_cur_page.innerText = cur_page - from_page + 1;
                 ui_num_pages.innerText = to_page - from_page + 1;
+                if (typeof time_begin !== Date) time_begin = Date.parse(time_begin);
                 let time = Math.round((new Date() - time_begin) / 1000)
                 console.log(time)
                 let remaining_time = Math.round(time / (cur_page - from_page + 1) * (to_page - cur_page));
