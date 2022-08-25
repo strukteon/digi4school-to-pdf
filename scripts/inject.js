@@ -237,18 +237,27 @@
         function download_svg(page) {
             return new Promise((resolve, reject) => {
 
-                console.log(`${base_url}${page}/${page}.svg`)
-                http.open("GET", `${base_url}${page}/${page}.svg`);
-                console.log(`${base_url}${page}/${page}.svg`)
+                generate_url(page).then(page_url =>{
+                    
+                
+                console.log(page_url);
+                if (page_url === ``)
+                {
+                    reject({msg: 'Die Seite ' + page + ' wurde nicht gefunden. Es kann sein, dass die URL anders ist, als erwartet.'});
+                }
+
+                console.log(`${page_url}.svg`)
+                http.open("GET", `${page_url}.svg`);
+                console.log(`${page_url}.svg`)
                 http.onreadystatechange = () => {
                     // cancel callback if request hasnt finished
                     if (http.readyState !== XMLHttpRequest.DONE)
                         return;
-                    console.log("in http")
+                    console.log("in http");
                     let parser = new DOMParser();
 
+                   
                     let updated_response = http.responseText;
-
                     let xml_doc = parser.parseFromString(updated_response, "text/xml");
                     let uri_image_promises = [];
                     console.log("before xmldoc")
@@ -256,7 +265,8 @@
                         if (c.localName === "image") {
                             let href = c.attributes["xlink:href"].textContent;
                             console.log("href")
-                            uri_image_promises.push(to_data_uri(`${base_url}${page}/${href}`));
+                            uri_image_promises.push(to_data_uri(`${base_url}${page}/${href}`)); //Doesn't need a fix, url structure doesn't change
+                            //uri_image_promises.push(to_data_uri(`${page_url}/${href}`)); //probably breaks everything
                         }
                     }
 
@@ -265,10 +275,11 @@
                         .then(uris => {
                             console.log(uris)
                             for (let {uri, url} of uris)
+                            {
                                 updated_response = updated_response
                                     // substring in order to get the original path from the svg
                                     .replace(url.substring(`${base_url}${page}/`.length), uri);
-
+                            }
                             let xml_doc = parser.parseFromString(updated_response, "text/xml");
                             let svg_html = xml_doc.rootElement.outerHTML;
                             console.log("before add page")
@@ -287,8 +298,10 @@
                         });
 
                 }
-
                 http.send();
+                });
+
+
 
             });
 
@@ -332,6 +345,48 @@
                     });
                 });
             }
+        }
+
+        async function generate_url(page)
+        {
+            return new Promise((resolve, reject) =>{
+            
+
+                const xhr = new XMLHttpRequest();
+
+                xhr.onreadystatechange = () => {
+                    // cancel callback if request hasnt finished
+                    if (xhr.readyState !== XMLHttpRequest.DONE)
+                        return;
+                    console.log("01 loaded");
+                    console.log(xhr.status);
+                    if (xhr.status == 200) //Page exist and loaded normal
+                    {
+                        console.log(`${base_url}${page}/${page}.svg` + ` is the right link`);
+                        resolve(`${base_url}${page}/${page}`);
+                    }
+                };
+            
+                xhr.open('GET', `${base_url}${page}/${page}.svg`); //Try to load normal (old) link structure
+                xhr.send();
+
+                const xhr2 = new XMLHttpRequest();
+
+                xhr2.onreadystatechange = () => {
+                    // cancel callback if request hasnt finished
+                    if (xhr2.readyState !== XMLHttpRequest.DONE)
+                        return;
+                    console.log("02 loaded");
+                    console.log(xhr2.status);
+                    if (xhr2.status == 200) //Page exist and loaded normal
+                    {
+                        console.log(`${base_url}${page}.svg` + ` is the right link`);
+                        resolve(`${base_url}${page}`);
+                    }
+                }
+                xhr2.open('GET', `${base_url}${page}.svg`); //Try to load alternative link structure
+                xhr2.send();
+            });
         }
 
         // used to parse images in svgs to pure data uris
