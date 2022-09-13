@@ -136,8 +136,8 @@
     async function generate_pdf(options) {
         let http = new XMLHttpRequest();
         let url = new URL(window.location);
-        let base_url = (url.origin + url.pathname).replace(/\/[^\/]+?$/, '/'); // should rename to bookURL
-        console.log(url, base_url)
+        let bookURL = (url.origin + url.pathname).replace(/\/[^\/]+?$/, '/');
+        console.log(url, bookURL)
 
         let svg_container = document.evaluate("//*[@id=\"jpedal\"]/div[2]/object", document, null, XPathResult.FIRST_ORDERED_NODE_TYPE, null).singleNodeValue;
         let width = Number(svg_container.width);
@@ -238,82 +238,72 @@
             return new Promise((resolve, reject) => {
 
                 generatePageUrl(page).then(page_url =>{
-                    
-                
-                console.log(page_url);
-                if (page_url === ``)
-                {
-                    reject({msg: 'Die Seite ' + page + ' wurde nicht gefunden. Es kann sein, dass die URL anders ist, als erwartet.'});
-                }
-
-                http.open("GET", `${page_url}${page}.svg`);
-                http.onreadystatechange = () => {
-                    // cancel callback if request hasnt finished
-                    if (http.readyState !== XMLHttpRequest.DONE)
-                        return;
-                    console.log("in http");
-                    let parser = new DOMParser();
-
-                   
-                    let updated_response = http.responseText;
-                    let xml_doc = parser.parseFromString(updated_response, "text/xml");
-                    let uri_image_promises = [];
-                    console.log("before xmldoc")
-
-                    recursiveAllChildImagesToURI(xml_doc, uri_image_promises, 0) // Actually works
-                    console.log("uri_image_promises:");
-                    console.log(uri_image_promises);
-                    function recursiveAllChildImagesToURI(xml_doc, uri_image_promises, deph)
+                    if (page_url === ``)
                     {
-                        if (deph>3) return;
-                        for (let child of xml_doc.children) {
-                            if (child.localName === "image") {
-                                let href = child.attributes["xlink:href"].textContent;
-                                console.log("href");
-                                console.log(href);
-                                //uri_image_promises.push(to_data_uri(`${base_url}${page}/${href}`)); //this line makes problems: some images (books) need base_url/href!
-                                uri_image_promises.push(to_data_uri(`${page_url}${href}`)); //Fix ? Fix!
-                                //console.log("ImageURL: " +`${page_url}${href}`)
-                            }
-                            recursiveAllChildImagesToURI(child, uri_image_promises, deph+1);
-                        }
+                        reject({msg: 'Die Seite ' + page + ' wurde nicht gefunden. Es kann sein, dass die URL anders ist, als erwartet.'});
                     }
 
-                    console.log("before promises")
-                    Promise.all(uri_image_promises)
-                        .then(uris => {
-                            console.log(uris)
-                            for (let {uri, url} of uris)
-                            {
-                                updated_response = updated_response
-                                    // substring in order to get the original path from the svg
-                                    .replace(url.substring(`${page_url}`.length), uri); // Fix?
-                                    //.replace(url.substring(`${base_url}${page}/`.length), uri);
+                    console.log("page .svg at :" +`${page_url}${page}.svg`);
+                    http.open("GET", `${page_url}${page}.svg`);
+                    http.onreadystatechange = () => {
+                        // cancel callback if request hasnt finished
+                        if (http.readyState !== XMLHttpRequest.DONE)
+                            return;
+                        console.log("in http");
+                        let parser = new DOMParser();
+
+                    
+                        let updated_response = http.responseText;
+                        let xml_doc = parser.parseFromString(updated_response, "text/xml");
+                        let uri_image_promises = [];
+                        console.log("before xmldoc")
+
+                        recursiveAllChildImagesToURI(xml_doc, uri_image_promises, 0)
+                        console.log("uri_image_promises:");
+                        console.log(uri_image_promises);
+                        function recursiveAllChildImagesToURI(xml_doc, uri_image_promises, deph)
+                        {
+                            if (deph>3) return;
+                            for (let child of xml_doc.children) {
+                                if (child.localName === "image") {
+                                    let href = child.attributes["xlink:href"].textContent;
+                                    console.log("href");
+                                    uri_image_promises.push(to_data_uri(`${page_url}${href}`));
+                                }
+                                recursiveAllChildImagesToURI(child, uri_image_promises, deph+1);
                             }
-                            let xml_doc = parser.parseFromString(updated_response, "text/xml"); 
-                            let svg_html = xml_doc.rootElement.outerHTML;
-                            console.log("before add page")
+                        }
 
-                            pdf_doc.addPage();
+                        console.log("before promises")
+                        Promise.all(uri_image_promises)
+                            .then(uris => {
+                                console.log(uris)
+                                for (let {uri, url} of uris)
+                                {
+                                    updated_response = updated_response
+                                        // substring in order to get the original path from the svg
+                                        .replace(url.substring(`${page_url}`.length), uri);
+                                        
+                                }
+                                let xml_doc = parser.parseFromString(updated_response, "text/xml"); 
+                                let svg_html = xml_doc.rootElement.outerHTML;
+                                console.log("before add page")
 
-                            console.log("after add page");
-                            let add_page;
-                            if (options.savemethod === "vector") add_page = add_as_vector;
-                            else if (options.savemethod === "png") add_page = add_as_png;
+                                pdf_doc.addPage();
 
-                            console.log("before add svg")
-                            console.log(svg_html); // what is in there?
-                            add_page(pdf_doc, svg_html)
-                            .then(() => resolve(page))
-                            .catch(error => reject({cancel: true, msg: error.msg, error}));
-                        });
+                                console.log("after add page");
+                                let add_page;
+                                if (options.savemethod === "vector") add_page = add_as_vector;
+                                else if (options.savemethod === "png") add_page = add_as_png;
 
-                }
-                http.send();
+                                console.log("before add svg")
+                                add_page(pdf_doc, svg_html)
+                                .then(() => resolve(page))
+                                .catch(error => reject({cancel: true, msg: error.msg, error}));
+                            });
+                    }
+                    http.send();
                 });
-
-
-
             });
 
             function add_as_vector(doc, svg) {
@@ -358,7 +348,7 @@
             }
         }
 
-        async function generatePageUrl(page) // returns the URL of the Folder with all images + the .svg file
+        async function generatePageUrl(page) // returns the URL of the Folder with all images + the .svg file // Should be read out of the E-Book site
         {
             return new Promise((resolve, reject) =>{
             
@@ -369,16 +359,13 @@
                     // cancel callback if request hasnt finished
                     if (xhr.readyState !== XMLHttpRequest.DONE)
                         return;
-                    console.log("01 loaded");
-                    console.log(xhr.status);
                     if (xhr.status == 200) //Page exist and loaded normal
                     {
-                        console.log("page located at: " +`${base_url}${page}/${page}.svg`);
-                        resolve(`${base_url}${page}/`);
+                        resolve(`${bookURL}${page}/`);
                     }
                 };
             
-                xhr.open('GET', `${base_url}${page}/${page}.svg`); //Try to load normal (old) link structure
+                xhr.open('GET', `${bookURL}${page}/${page}.svg`); //Try to load normal (old) link structure
                 xhr.send();
 
                 const xhr2 = new XMLHttpRequest();
@@ -387,15 +374,12 @@
                     // cancel callback if request hasnt finished
                     if (xhr2.readyState !== XMLHttpRequest.DONE)
                         return;
-                    console.log("02 loaded");
-                    console.log(xhr2.status);
                     if (xhr2.status == 200) //Page exist and loaded normal
                     {
-                        console.log("page located at: " +`${base_url}${page}.svg`);
-                        resolve(`${base_url}`);
+                        resolve(`${bookURL}`);
                     }
                 }
-                xhr2.open('GET', `${base_url}${page}.svg`); //Try to load alternative link structure
+                xhr2.open('GET', `${bookURL}${page}.svg`); //Try to load alternative link structure
                 xhr2.send();
             });
         }
