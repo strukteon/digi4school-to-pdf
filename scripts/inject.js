@@ -209,7 +209,7 @@
 
         for (let i = options.from_page; i <= options.to_page; i++) {
             if (canceled) break;
-            console.log("start page 1")
+            console.log("start page " + i)
             try {
                 await download_svg(i);
             } catch (error) {
