@@ -288,39 +288,63 @@
                                 console.log(updated_response);
                                 let xml_doc = parser.parseFromString(updated_response, "text/xml"); 
                                 let svg_html = xml_doc.rootElement.outerHTML;
+
                                 console.log("before add page")
-
                                 pdf_doc.addPage();
-
                                 console.log("after add page");
+
                                 let add_page; 
                                 if (options.savemethod === "vector") add_page = add_as_vector;
                                 else if (options.savemethod === "png") add_page = add_as_png;
 
-                                console.log("before add svg")
+                                // tests if the conversion works with a dummy pdf. In some cases an error in the conversion breaks the whole pdf ==> no output
+                                console.log("testing if page " + page +" is convertable as " + options.savemethod);
+                                let dummyDoc = new PDFDocument({ // create dummy pdf
+                                    autoFirstPage: true,
+                                    size: [
+                                        width * options.scale,
+                                        height * options.scale
+                                    ],
+                                    margin: 0
+                                });
+                                add_page(dummyDoc, svg_html) // test conversion with dummy
+                                .then(() => { // if succesfull convert with the real pdf
+                                    console.log("is convertable")
+                                    add_page(pdf_doc, svg_html)
+                                    .then(() => {resolve(page);
+                                        console.log(pdf_doc);})
+                                    .catch(error => reject({cancel: true, msg: error.msg, error}));
+                                })
+                                .catch(error => { // if not succesfull, convert with the real pdf but other method
+                                    console.log("Could not save page " + page + " as " + options.savemethod + ". Trying other format \n Reason: " + error.msg);
+                                    if (options.savemethod === "vector") add_page = add_as_png; //tries the other method
+                                    else if (options.savemethod === "png") add_page = add_as_vector; // -"-
+                                    add_page(pdf_doc, svg_html)
+                                    .then(() => {resolve(page);
+                                        console.log(pdf_doc);})
+                                    .catch(error => reject({cancel: true, msg: error.msg, error}));
+                                });
+
+
+
+                                /*console.log("before add svg")
                                 add_page(pdf_doc, svg_html) // catch error here
-                                .then(() => {resolve(page);
+                                .then(() => {
+                                    resolve(page);
                                     console.log(pdf_doc);})
                                 .catch(error => {
-                                    console.log("Could not save page " + page + " as " + options.savemethod + ". Trying other format");
-                                    if (options.savemethod === "vector") add_page = add_as_png; //do the other option
-                                    else if (options.savemethod === "png") add_page = add_as_vector; //do the other option
+                                    console.log("Could not save page " + page + " as " + options.savemethod + ". Trying other format \n Reason: " + error.msg);
+                                    if (options.savemethod === "vector") add_page = add_as_png; //tries the other option
+                                    else if (options.savemethod === "png") add_page = add_as_vector; // -"-
                                     console.log(pdf_doc);
-
-                                    pdf_doc.removePage = function() {
-                                        var pages = this._root.data.Pages.data;
-                                        pages.Kids.pop();
-                                        pages.Count--;
-                                        this.page = null;
-                                    };
                                     //pdf_doc.removePage();
                                     // Page is overwritten? Not the right way to do this.
-                                    console.log("after remove page");
                                     add_page(pdf_doc, svg_html)
-                                    .then(() => resolve(page))
+                                    .then(() => {resolve(page);
+                                        console.log(pdf_doc);})
                                     .catch(error => reject({cancel: true, msg: error.msg, error}));
                                     //reject({cancel: true, msg: error.msg, error})
-                                    });
+                                });*/
                             });
                     }
                     http.send();
@@ -425,7 +449,6 @@
             });
         }
     }
-
 })();
 
 undefined;
