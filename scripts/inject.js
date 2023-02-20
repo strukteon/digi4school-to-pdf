@@ -258,12 +258,13 @@
             console.log("uri_image_promises:");
             console.log(uri_image_promises);
             function recursiveAllChildImagesToURI(xml_doc, uri_image_promises, deph) {
-              if (deph > 3) return;
+              if (deph > 4) return;
               for (let child of xml_doc.children) {
                 if (child.localName === "image") {
                   let href = child.attributes["xlink:href"].textContent;
                   console.log("href");
                   uri_image_promises.push(to_data_uri(`${page_url}${href}`));
+                  console.log(`${page_url}${href}`) // IMAGES Debugging
                 }
                 recursiveAllChildImagesToURI(child, uri_image_promises, deph + 1);
               }
@@ -273,9 +274,8 @@
             Promise.all(uri_image_promises).then((uris) => {
               console.log(uris);
               for (let { uri, url } of uris) {
-                updated_response = updated_response
-                  // substring in order to get the original path from the svg
-                  .replace(url.substring(`${page_url}`.length), uri);
+                updated_response = updated_response.replace(url.substring(`${page_url}`.length), uri);
+                // substring in order to get the original path from the svg
               }
               console.log(updated_response);
               let xml_doc = parser.parseFromString(updated_response, "text/xml");
@@ -311,12 +311,7 @@
                 .catch((error) => {
                   // if not succesfull, convert with the real pdf but other method
                   console.log(
-                    "Could not save page " +
-                      page +
-                      " as " +
-                      options.savemethod +
-                      ". Trying other format \n Reason: " +
-                      error.msg
+                    "Could not save page " + page + " as " + options.savemethod + ". Trying other format \n Reason: " + error.msg
                   );
                   if (options.savemethod === "vector") add_page = add_as_png; //tries the other method
                   else if (options.savemethod === "png") add_page = add_as_vector; // -"-
