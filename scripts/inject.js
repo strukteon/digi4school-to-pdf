@@ -1,4 +1,4 @@
-let debuging = false;
+debuging = false;
 
 (() => {
   let pages;
