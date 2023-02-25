@@ -36,6 +36,14 @@
         </div>
       </div>
       <span style="display: none" id="page-error" class="d4s2pdf-error">Ungültiger Seitenbereich</span>
+      <form action="#">
+        <p>
+          <label>
+            <input id="safe-mode" type="checkbox" />
+            <span title="Halbe Geschwindigkeit, falls das PDF nicht erscheint">Sicherer Modus</span>
+          </label>
+        </p>
+      </form>
     </div>
     </div>
       <div class="modal-footer">
@@ -59,6 +67,7 @@
 
   let vector_info = document.getElementById("vector-info");
   let png_info = document.getElementById("png-info");
+  let safemode = document.getElementById("safe-mode");
 
   // interface listeners
   let savemethod = document.getElementById("savemethod");
@@ -120,9 +129,9 @@
       scale: savemethod.value === "png" ? scale.value * 0.25 : 1,
       from_page: from_page.value.length > 0 ? Number(from_page.value) : 1,
       to_page: to_page.value.length > 0 ? Number(to_page.value) : pages,
-      safemode: false // missing frontend implementation
+      safemode: safemode.checked
     };
-
+    console.log("options:");
     console.log(options);
 
     generate_pdf(options);
