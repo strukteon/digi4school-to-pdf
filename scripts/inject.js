@@ -298,68 +298,70 @@ let debuging = false;
               let add_page;
               if (options.savemethod === "vector") add_page = add_as_vector;
               else if (options.savemethod === "png") add_page = add_as_png;
+              
               if (options.safemode) {
                 // tests if the conversion works with a dummy pdf. In some cases an error in the conversion breaks the whole pdf ==> no output
-                console.log("testing if page " + page + " is convertable as " + options.savemethod);
-                let dummyDoc = new PDFDocument({
-                  autoFirstPage: true,
-                  size: [width * options.scale, height * options.scale],
-                  margin: 0,
-                });
-                add_page(dummyDoc, svg_html) // test conversion with dummy pdf (slow)
-                  .then(() => {
-                    // if succesfull convert with the real pdf
-                    console.log("is convertable");
-                    add_page(pdf_doc, svg_html)
-                      .then(() => {
-                        resolve(page);
-                        debugLog(pdf_doc);
-                      })
-                      .catch((error) => reject({ cancel: true, msg: error.msg, error }));
-                  })
-                  .catch((error) => {
-                    // if not succesfull, convert with the real pdf but other method
-                    console.log(
-                      "Could not save page " +
-                        page +
-                        " as " +
-                        options.savemethod +
-                        ". Trying other format \n Reason: " +
-                        error.msg
-                    );
-                    if (options.savemethod === "vector") add_page = add_as_png; //tries the other method
-                    else if (options.savemethod === "png") add_page = add_as_vector; // -"-
-                    add_page(pdf_doc, svg_html)
-                      .then(() => {
-                        resolve(page);
-                        debugLog(pdf_doc);
-                      })
-                      .catch((error) => reject({ cancel: true, msg: error.msg, error }));
+                convertSafe()
+                function convertSafe()
+                {
+                  console.log("testing if page " + page + " is convertable as " + options.savemethod);
+                  let dummyDoc = new PDFDocument({
+                    autoFirstPage: true,
+                    size: [width * options.scale, height * options.scale],
+                    margin: 0,
                   });
+                  add_page(dummyDoc, svg_html) // test conversion with dummy pdf (slow)
+                    .then(() => {
+                      // if succesfull convert with the real pdf
+                      console.log("is convertable");
+                      add_page(pdf_doc, svg_html)
+                        .then(() => {
+                          resolve(page);
+                          debugLog(pdf_doc);
+                        })
+                        .catch((error) => reject({ cancel: true, msg: error.msg, error }));
+                    })
+                    .catch((error) => {
+                      // if not succesfull, convert with the real pdf but other method
+                      console.log(`Could not save page ${page}' as ${options.savemethod}. Trying other format \n Reason: ${error.msg}`);
+                      if (options.savemethod === "vector") add_page = add_as_png; //tries the other method
+                      else if (options.savemethod === "png") add_page = add_as_vector; // -"-
+                      add_page(pdf_doc, svg_html)
+                        .then(() => {
+                          resolve(page);
+                          debugLog(pdf_doc);
+                        })
+                        .catch((error) => reject({ cancel: true, msg: error.msg, error }));
+                    });
+                }
               }
               else {
-                debugLog("before add svg");
-                add_page(pdf_doc, svg_html)
-                  .then(() => {
-                    resolve(page);
-                    debugLog(pdf_doc);
-                  })
-                  .catch((error) => {
-                    console.log(
-                      "Could not save page " + page +" as " + options.savemethod + ". Trying other format"+
-                      "\n Reason: " + error.msg
-                    );
-                    if (options.savemethod === "vector") add_page = add_as_png; //tries the other option
-                    else if (options.savemethod === "png") add_page = add_as_vector; // -"-
-                    debugLog(pdf_doc);
-                    // content in the page is overwritten
-                    add_page(pdf_doc, svg_html)
-                      .then(() => {
-                        resolve(page);
-                        debugLog(pdf_doc);
-                      })
-                      .catch((error) => reject({ cancel: true, msg: error.msg, error }));
-                  });
+                convertFast()
+                function convertFast()
+                {
+                  debugLog("before add svg");
+                  add_page(pdf_doc, svg_html)
+                    .then(() => {
+                      resolve(page);
+                      debugLog(pdf_doc);
+                    })
+                    .catch((error) => {
+                      console.log(
+                        "Could not save page " + page +" as " + options.savemethod + ". Trying other format"+
+                        "\n Reason: " + error.msg
+                      );
+                      if (options.savemethod === "vector") add_page = add_as_png; //tries the other option
+                      else if (options.savemethod === "png") add_page = add_as_vector; // -"-
+                      debugLog(pdf_doc);
+                      // content in the page is overwritten
+                      add_page(pdf_doc, svg_html)
+                        .then(() => {
+                          resolve(page);
+                          debugLog(pdf_doc);
+                        })
+                        .catch((error) => reject({ cancel: true, msg: error.msg, error }));
+                    });
+                }
               }
             });
           };
@@ -474,5 +476,3 @@ function debugLog(obj){
   if (debuging)
     console.log(obj);
 }
-
-
