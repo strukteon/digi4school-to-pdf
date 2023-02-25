@@ -1,3 +1,5 @@
+let debuging = false;
+
 (() => {
   let pages;
 
@@ -157,7 +159,7 @@
     ).singleNodeValue;
     let width = Number(svg_container.width);
     let height = Number(svg_container.height);
-    console.log("before pdfdoc");
+    debugLog("before pdfdoc");
 
     let pdf_doc = new PDFDocument({
       autoFirstPage: false,
@@ -165,8 +167,8 @@
       margin: 0,
     });
 
-    console.log("------", width, height);
-    console.log(pdf_doc);
+    debugLog("------", width, height);
+    debugLog(pdf_doc);
 
     let chunks = [];
     pdf_doc.pipe({
@@ -189,7 +191,7 @@
       emit: (...args) => {},
     });
 
-    console.log("after pdfdoc");
+    debugLog("after pdfdoc");
 
     let convert_progress = {
       title: document.title,
@@ -220,7 +222,7 @@
 
     for (let i = options.from_page; i <= options.to_page; i++) {
       if (canceled) break;
-      console.log("start page " + i);
+      console.log("downloading page " + i);
       try {
         await download_svg(i);
       } catch (error) {
@@ -252,45 +254,45 @@
             });
           }
 
-          console.log("page .svg at :" + `${page_url}${page}.svg`);
+          debugLog("page .svg at :" + `${page_url}${page}.svg`);
           http.open("GET", `${page_url}${page}.svg`);
           http.onreadystatechange = () => {
             // cancel callback if request hasnt finished
             if (http.readyState !== XMLHttpRequest.DONE) return;
-            console.log("in http");
+            debugLog("in http");
             let parser = new DOMParser();
 
             let updated_response = http.responseText;
             let xml_doc = parser.parseFromString(updated_response, "text/xml");
             let uri_image_promises = [];
-            console.log("before xmldoc");
+            debugLog("before xmldoc");
 
             recursiveAllChildImagesToURI(xml_doc, uri_image_promises, 0);
-            console.log("uri_image_promises:");
-            console.log(uri_image_promises);
+            debugLog("uri_image_promises:");
+            debugLog(uri_image_promises);
             function recursiveAllChildImagesToURI(xml_doc, uri_image_promises, deph) {
               if (deph > 4) return;
               for (let child of xml_doc.children) {
                 if (child.localName === "image") {
                   let href = child.attributes["xlink:href"].textContent;
-                  console.log("href");
+                  debugLog("href");
                   uri_image_promises.push(to_data_uri(`${page_url}${href}`));
                 }
                 recursiveAllChildImagesToURI(child, uri_image_promises, deph + 1);
               }
             }
 
-            console.log("before promises");
+            debugLog("before promises");
             Promise.all(uri_image_promises).then((uris) => {
-              console.log(uris);
+              debugLog(uris);
               for (let { uri, url } of uris) {
                 updated_response = updated_response.replace(url.substring(`${page_url}`.length), uri);
                 // substring in order to get the original path from the svg
               }
-              console.log(updated_response);
+              debugLog(updated_response);
               let xml_doc = parser.parseFromString(updated_response, "text/xml");
               let svg_html = xml_doc.rootElement.outerHTML;
-              console.log("adding new page to pdf")
+              debugLog("adding new page to pdf")
               pdf_doc.addPage();
 
               let add_page;
@@ -311,7 +313,7 @@
                     add_page(pdf_doc, svg_html)
                       .then(() => {
                         resolve(page);
-                        console.log(pdf_doc);
+                        debugLog(pdf_doc);
                       })
                       .catch((error) => reject({ cancel: true, msg: error.msg, error }));
                   })
@@ -330,17 +332,17 @@
                     add_page(pdf_doc, svg_html)
                       .then(() => {
                         resolve(page);
-                        console.log(pdf_doc);
+                        debugLog(pdf_doc);
                       })
                       .catch((error) => reject({ cancel: true, msg: error.msg, error }));
                   });
               }
               else {
-                console.log("before add svg");
+                debugLog("before add svg");
                 add_page(pdf_doc, svg_html)
                   .then(() => {
                     resolve(page);
-                    console.log(pdf_doc);
+                    debugLog(pdf_doc);
                   })
                   .catch((error) => {
                     console.log(
@@ -349,12 +351,12 @@
                     );
                     if (options.savemethod === "vector") add_page = add_as_png; //tries the other option
                     else if (options.savemethod === "png") add_page = add_as_vector; // -"-
-                    console.log(pdf_doc);
+                    debugLog(pdf_doc);
                     // content in the page is overwritten
                     add_page(pdf_doc, svg_html)
                       .then(() => {
                         resolve(page);
-                        console.log(pdf_doc);
+                        debugLog(pdf_doc);
                       })
                       .catch((error) => reject({ cancel: true, msg: error.msg, error }));
                   });
@@ -367,7 +369,7 @@
 
       function add_as_vector(doc, svg) {
         return new Promise((resolve, reject) => {
-          console.log("before pdfkit add image", { width, height });
+          debugLog("before pdfkit add image", { width, height });
           try {
             SVGtoPDF(doc, svg, 0, 0, { assumePt: true });
           } catch (error) {
@@ -379,23 +381,23 @@
             });
             return;
           }
-          console.log("after pdfkit add image");
+          debugLog("after pdfkit add image");
           resolve();
         });
       }
 
       function add_as_png(doc, svg) {
         return new Promise((resolve, reject) => {
-          console.log(svgAsPngUri);
+          debugLog(svgAsPngUri);
           let template = document.createElement("div");
           template.innerHTML = svg;
           let svg_elem = template.childNodes[0];
           svg_elem.style.background_color = "white";
-          console.log(svg_elem);
+          debugLog(svg_elem);
           svgAsPngUri(svg_elem, { scale: options.scale }, (uri, w, h) => {
-            console.log("before pdfkit add image", doc.image);
-            console.log(uri);
-            console.log(options);
+            debugLog("before pdfkit add image", doc.image);
+            debugLog(uri);
+            debugLog(options);
             // reject "data:," uris, as an error occurred while converting!
             if (uri === "data:,") {
               reject({
@@ -407,7 +409,7 @@
             }
             doc.image(uri, 0, 0);
 
-            console.log("after pdfkit add image");
+            debugLog("after pdfkit add image");
             resolve();
           });
         });
@@ -467,3 +469,10 @@
     }
   }
 })();
+
+function debugLog(obj){
+  if (debuging)
+    console.log(obj);
+}
+
+
