@@ -1,7 +1,8 @@
 (() => {
   let pages;
 
-  let d4s2pdf_modal = /* html */ `<div class="modal-content">
+  let d4s2pdf_modal = /* html */ 
+   `<div class="modal-content">
       <div class="header">
         <img src="https://cdn.digi4school.at/img/d4s_logo.png">
         <span>&nbsp;to PDF</span>
@@ -119,6 +120,7 @@
       scale: savemethod.value === "png" ? scale.value * 0.25 : 1,
       from_page: from_page.value.length > 0 ? Number(from_page.value) : 1,
       to_page: to_page.value.length > 0 ? Number(to_page.value) : pages,
+      safemode: false // missing frontend implementation
     };
 
     console.log(options);
@@ -264,7 +266,6 @@
                   let href = child.attributes["xlink:href"].textContent;
                   console.log("href");
                   uri_image_promises.push(to_data_uri(`${page_url}${href}`));
-                  console.log(`${page_url}${href}`) // IMAGES Debugging
                 }
                 recursiveAllChildImagesToURI(child, uri_image_promises, deph + 1);
               }
@@ -280,48 +281,75 @@
               console.log(updated_response);
               let xml_doc = parser.parseFromString(updated_response, "text/xml");
               let svg_html = xml_doc.rootElement.outerHTML;
-
-              console.log("before add page");
+              console.log("adding new page to pdf")
               pdf_doc.addPage();
-              console.log("after add page");
 
               let add_page;
               if (options.savemethod === "vector") add_page = add_as_vector;
               else if (options.savemethod === "png") add_page = add_as_png;
-
-              // tests if the conversion works with a dummy pdf. In some cases an error in the conversion breaks the whole pdf ==> no output
-              console.log("testing if page " + page + " is convertable as " + options.savemethod);
-              let dummyDoc = new PDFDocument({
-                // create dummy pdf
-                autoFirstPage: true,
-                size: [width * options.scale, height * options.scale],
-                margin: 0,
-              });
-              add_page(dummyDoc, svg_html) // test conversion with dummy
-                .then(() => {
-                  // if succesfull convert with the real pdf
-                  console.log("is convertable");
-                  add_page(pdf_doc, svg_html)
-                    .then(() => {
-                      resolve(page);
-                      console.log(pdf_doc);
-                    })
-                    .catch((error) => reject({ cancel: true, msg: error.msg, error }));
-                })
-                .catch((error) => {
-                  // if not succesfull, convert with the real pdf but other method
-                  console.log(
-                    "Could not save page " + page + " as " + options.savemethod + ". Trying other format \n Reason: " + error.msg
-                  );
-                  if (options.savemethod === "vector") add_page = add_as_png; //tries the other method
-                  else if (options.savemethod === "png") add_page = add_as_vector; // -"-
-                  add_page(pdf_doc, svg_html)
-                    .then(() => {
-                      resolve(page);
-                      console.log(pdf_doc);
-                    })
-                    .catch((error) => reject({ cancel: true, msg: error.msg, error }));
+              if (options.safemode) {
+                // tests if the conversion works with a dummy pdf. In some cases an error in the conversion breaks the whole pdf ==> no output
+                console.log("testing if page " + page + " is convertable as " + options.savemethod);
+                let dummyDoc = new PDFDocument({
+                  autoFirstPage: true,
+                  size: [width * options.scale, height * options.scale],
+                  margin: 0,
                 });
+                add_page(dummyDoc, svg_html) // test conversion with dummy pdf (slow)
+                  .then(() => {
+                    // if succesfull convert with the real pdf
+                    console.log("is convertable");
+                    add_page(pdf_doc, svg_html)
+                      .then(() => {
+                        resolve(page);
+                        console.log(pdf_doc);
+                      })
+                      .catch((error) => reject({ cancel: true, msg: error.msg, error }));
+                  })
+                  .catch((error) => {
+                    // if not succesfull, convert with the real pdf but other method
+                    console.log(
+                      "Could not save page " +
+                        page +
+                        " as " +
+                        options.savemethod +
+                        ". Trying other format \n Reason: " +
+                        error.msg
+                    );
+                    if (options.savemethod === "vector") add_page = add_as_png; //tries the other method
+                    else if (options.savemethod === "png") add_page = add_as_vector; // -"-
+                    add_page(pdf_doc, svg_html)
+                      .then(() => {
+                        resolve(page);
+                        console.log(pdf_doc);
+                      })
+                      .catch((error) => reject({ cancel: true, msg: error.msg, error }));
+                  });
+              }
+              else {
+                console.log("before add svg");
+                add_page(pdf_doc, svg_html)
+                  .then(() => {
+                    resolve(page);
+                    console.log(pdf_doc);
+                  })
+                  .catch((error) => {
+                    console.log(
+                      "Could not save page " + page +" as " + options.savemethod + ". Trying other format"+
+                      "\n Reason: " + error.msg
+                    );
+                    if (options.savemethod === "vector") add_page = add_as_png; //tries the other option
+                    else if (options.savemethod === "png") add_page = add_as_vector; // -"-
+                    console.log(pdf_doc);
+                    // content in the page is overwritten
+                    add_page(pdf_doc, svg_html)
+                      .then(() => {
+                        resolve(page);
+                        console.log(pdf_doc);
+                      })
+                      .catch((error) => reject({ cancel: true, msg: error.msg, error }));
+                  });
+              }
             });
           };
           http.send();
