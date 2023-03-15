@@ -12,3 +12,5 @@ Für diesen Fork muss man das Addon manuell hinzufügen:
 In die Suchleiste `about:debugging` eingeben und Enter drücken. Im Reiter `Dieser Firefox` auf `tämporäres Add-on laden` klicken und im Explorer `manifest.json` auswählen.
 
 ### Google Chrome
+
+In der Suchleiste `chrome://extensions` eingeben, oben rechts den Entwicklermodus aktivieren, auf `Entpackte Erweiterung laden` klicken und den Ordner, in dem sich die Datei `manifest.json` befindet, auswählen.
