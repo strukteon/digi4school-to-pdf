@@ -1,81 +1,84 @@
 .btn-d4s2pdf {
-    background-color: #ff6600 !important;
-    font-weight: bold;
-    font-style: italic;
-    color: rgba(255, 255, 255, .9);
+  background-color: #ff6600 !important;
+  font-weight: bold;
+  font-style: italic;
+  color: rgba(255, 255, 255, 0.9);
 }
 
 .modal-footer {
-    background-color: #40b7ea !important;
+  background-color: #40b7ea !important;
 }
 
 .modal-content {
-    padding: 0 !important;
+  padding: 0 !important;
 }
 
 .modal-content .header > span {
-    font-weight: bold;
-    font-style: italic;
-    font-size: x-large;
-    color: #2E516D;
-    padding: .125rem;
-    margin: .125rem;
+  font-weight: bold;
+  font-style: italic;
+  font-size: x-large;
+  color: #2e516d;
+  padding: 0.125rem;
+  margin: 0.125rem;
 }
 
 .modal-content .header {
-    padding: 24px;
+  padding: 24px;
 }
 
 .modal-content .content {
-    padding: 24px;
-    background-color: #40b7ea;
-    color: white;
+  padding: 24px;
+  background-color: #40b7ea;
+  color: white;
 }
 
-.input-field, .input-field input {
-    border-bottom-color: white !important;
-    color: white !important;
+.input-field,
+.input-field input {
+  border-bottom-color: white !important;
+  color: white !important;
 }
 
-.modal-content .select-wrapper, .select-wrapper .select-dropdown,
-.modal-content label, .dropdown-content li span {
-    color: white !important;
+.modal-content .select-wrapper,
+.select-wrapper .select-dropdown,
+.modal-content label,
+.dropdown-content li span {
+  color: white !important;
 }
 
 .dropdown-content {
-    background-color: #40b7ea;
+  background-color: #40b7ea;
 }
 
 .modal-content .select-wrapper svg {
-    fill: white !important;
+  fill: white !important;
 }
 
 input[type="range"] {
-    border: none;
+  border: none;
 }
 
 input[type="range"]::-moz-range-thumb {
-    background-color: #ff6600;
+  background-color: #ff6600;
 }
 
 input[type="range"]::-moz-range-track {
-    background-color: rgba(255, 255, 255, .5);
+  background-color: rgba(255, 255, 255, 0.5);
 }
 
 .row {
-    margin: 0 !important;
+  margin: 0 !important;
 }
 
 input[type="number"] {
-    -webkit-appearance: textfield;
-    -moz-appearance: textfield;
-    appearance: textfield;
+  -webkit-appearance: textfield;
+  -moz-appearance: textfield;
+  appearance: textfield;
 }
-input[type=number]::-webkit-inner-spin-button,
-input[type=number]::-webkit-outer-spin-button {
-    -webkit-appearance: none;
+input[type="number"]::-webkit-inner-spin-button,
+input[type="number"]::-webkit-outer-spin-button {
+  -webkit-appearance: none;
 }
 
 .d4s2pdf-error {
-    color: #ff6600;
+  color: #ff6600;
 }
